@@ -7,14 +7,22 @@ export default function Home() {
   const [inputCode, setInputCode] = useState("");
   const [outputCode, setOutputCode] = useState("");
 
-  function removeDarkStateClasses(classString: string | undefined) {
-    classString = classString ? classString : "";
-    const element = new DOMParser().parseFromString(classString, "text/html");
-    const the_element = element.body.firstChild as HTMLElement;
-    let classList = the_element.className.split(" ");
-    classList = classList.filter((item) => !/^dark:/.test(item));
-    the_element.className = classList.join(" ");
-    return the_element.outerHTML;
+  // function removeDarkStateClasses(classString: string | undefined) {
+  //   classString = classString ? classString : "";
+
+  //   console.log(classString);
+
+  //   classString = classString.replace(/dark:/g, "");
+
+  //   return classString;
+  // }
+
+  function removeDarkStateClasses(classString: string) {
+    // Definisikan regex untuk mencocokkan semua kelas yang diawali dengan "dark:"
+    const darkClassRegex = /dark:[^,\s"]+/g;
+
+    // Ganti semua kecocokan dengan string kosong
+    return classString.replace(darkClassRegex, "").replace(/\s+/g, " ").trim();
   }
 
   const handleSplit = (e: string | undefined) => {
@@ -42,8 +50,21 @@ export default function Home() {
             language="html"
             value={inputCode}
             onChange={handleSplit}
+            beforeMount={(monaco) => {
+              monaco.languages.registerDocumentFormattingEditProvider("html", {
+                async provideDocumentFormattingEdits(model) {
+                  return [
+                    {
+                      range: model.getFullModelRange(),
+                      text: removeDarkStateClasses(model.getValue()),
+                    },
+                  ];
+                },
+              });
+            }}
             options={{
               wordWrap: "on",
+              formatOnType: true,
             }}
             className="border"
           />
@@ -61,6 +82,8 @@ export default function Home() {
             options={{
               readOnly: true,
               wordWrap: "on",
+              formatOnType: true,
+              formatOnPaste: true,
             }}
             className="border"
           />
